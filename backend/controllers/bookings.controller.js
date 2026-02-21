@@ -14,8 +14,8 @@ export const createBooking = async (req, res) => {
             return res.status(409).json({ message: 'Slot is no longer available' });
         }
 
-        // Check slot is in the future
-        const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
+        // Check slot is in the future (Parse as IST since input is local time)
+        const slotStart = new Date(`${slot.date}T${slot.startTime}:00+05:30`);
         if (slotStart <= new Date()) {
             return res.status(400).json({ message: 'Cannot book a past slot' });
         }
@@ -244,7 +244,7 @@ export const getMeetingLink = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
+        const slotStart = new Date(`${slot.date}T${slot.startTime}:00+05:30`);
         const fiveMinBefore = new Date(slotStart.getTime() - 5 * 60 * 1000);
         const now = new Date();
 
@@ -282,7 +282,8 @@ export const updateResume = async (req, res) => {
         // Check slot hasn't started
         const slot = db.meetingSlots.findById(booking.slotId);
         if (slot) {
-            const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
+            // Auto expire 10 mins after slot start time (Parse as IST)
+            const slotStart = new Date(`${slot.date}T${slot.startTime}:00+05:30`);
             if (new Date() >= slotStart) {
                 return res.status(400).json({ message: 'Cannot update resume after interview start time' });
             }

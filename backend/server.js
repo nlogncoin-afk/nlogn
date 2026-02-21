@@ -99,7 +99,7 @@ const runAutoExpiry = () => {
             const slot = db.meetingSlots.findById(booking.slotId);
             if (!slot) continue;
 
-            const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
+            const slotStart = new Date(`${slot.date}T${slot.startTime}:00+05:30`);
             const expireThreshold = new Date(slotStart.getTime() + 10 * 60 * 1000);
 
             if (now > expireThreshold) {
