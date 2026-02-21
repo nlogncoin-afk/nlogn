@@ -1,11 +1,17 @@
-import db from '../database/inMemoryDB.js';
+import db from '../database/postgresDB.js';
 
 // GET /api/admin/analytics — Aggregated analytics for admin dashboard
 export const getAnalytics = async (req, res) => {
     try {
-        const users = db.users.getAll().filter(u => u.role !== 'admin');
-        const allBookings = db.bookings.findAll();
-        const allSlots = db.meetingSlots.findAll();
+        // Bulk Load from PostgreSQL for blazing fast synchronous analytics aggregation
+        const allUsersList = await db.users.getAll();
+        const users = allUsersList.filter(u => u.role !== 'admin');
+        const allBookings = await db.bookings.findAll();
+        const allSlots = await db.meetingSlots.findAll();
+
+        // Helpers to substitute continuous DB pings
+        const getSlot = (id) => allSlots.find(s => s.id === id);
+        const getUser = (id) => allUsersList.find(u => u.id === id);
 
         const now = new Date();
         const today = now.toISOString().split('T')[0]; // 'YYYY-MM-DD'
@@ -20,16 +26,17 @@ export const getAnalytics = async (req, res) => {
 
         // Interviews today
         const interviewsToday = allBookings.filter(b => {
-            const slot = db.meetingSlots.findById(b.slotId);
+            const slot = getSlot(b.slotId);
             return slot && slot.date === today;
         }).length;
 
         // Upcoming confirmed
         const upcomingConfirmed = allBookings.filter(b => {
             if (b.status !== 'confirmed') return false;
-            const slot = db.meetingSlots.findById(b.slotId);
+            const slot = getSlot(b.slotId);
             if (!slot) return false;
-            const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
+            // Parse as IST Since that is the standard
+            const slotStart = new Date(`${slot.date}T${slot.startTime}:00+05:30`);
             return slotStart > now;
         }).length;
 
@@ -72,7 +79,7 @@ export const getAnalytics = async (req, res) => {
             d.setDate(weekStart.getDate() + i);
             const dateStr = d.toISOString().split('T')[0];
             const count = allBookings.filter(b => {
-                const slot = db.meetingSlots.findById(b.slotId);
+                const slot = getSlot(b.slotId);
                 return slot && slot.date === dateStr;
             }).length;
             thisWeek.push({ day: dayNames[i], interviews: count });
@@ -82,13 +89,13 @@ export const getAnalytics = async (req, res) => {
         const upcomingBookings = allBookings
             .filter(b => {
                 if (b.status !== 'confirmed') return false;
-                const slot = db.meetingSlots.findById(b.slotId);
+                const slot = getSlot(b.slotId);
                 if (!slot) return false;
-                return new Date(`${slot.date}T${slot.startTime}:00`) > now;
+                return new Date(`${slot.date}T${slot.startTime}:00+05:30`) > now;
             })
             .map(b => {
-                const slot = db.meetingSlots.findById(b.slotId);
-                const user = db.users.findById(b.userId);
+                const slot = getSlot(b.slotId);
+                const user = getUser(b.userId);
                 return {
                     id: b.id,
                     userName: user?.fullName || 'Unknown',
@@ -99,8 +106,8 @@ export const getAnalytics = async (req, res) => {
                 };
             })
             .sort((a, b) => {
-                const aTime = new Date(`${a.slotDate}T${a.slotTime}:00`);
-                const bTime = new Date(`${b.slotDate}T${b.slotTime}:00`);
+                const aTime = new Date(`${a.slotDate}T${a.slotTime}:00+05:30`);
+                const bTime = new Date(`${b.slotDate}T${b.slotTime}:00+05:30`);
                 return aTime - bTime;
             })
             .slice(0, 5);

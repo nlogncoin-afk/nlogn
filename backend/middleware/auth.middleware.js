@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import db from '../database/inMemoryDB.js';
+import db from '../database/postgresDB.js';
 
 export const protect = async (req, res, next) => {
     let token;

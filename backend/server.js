@@ -10,7 +10,7 @@ import meetingSlotRoutes from './routes/meetingSlots.routes.js';
 import bookingRoutes from './routes/bookings.routes.js';
 import usersRoutes from './routes/users.routes.js';
 import adminRoutes from './routes/admin.routes.js';
-import db from './database/inMemoryDB.js';
+import db, { initDB } from './database/postgresDB.js';
 
 dotenv.config();
 
@@ -87,27 +87,27 @@ app.get('/', (req, res) => {
 // Marks confirmed bookings as not_attended if slot start + 10min < now
 // and user never joined (userJoinedAt is null)
 // ============================================================
-const runAutoExpiry = () => {
+const runAutoExpiry = async () => {
     try {
         const now = new Date();
-        const bookings = db.bookings.findAll();
+        const bookings = await db.bookings.findAll();
 
         for (const booking of bookings) {
             if (booking.status !== 'confirmed') continue;
             if (booking.userJoinedAt) continue; // user joined, skip
 
-            const slot = db.meetingSlots.findById(booking.slotId);
+            const slot = await db.meetingSlots.findById(booking.slotId);
             if (!slot) continue;
 
             const slotStart = new Date(`${slot.date}T${slot.startTime}:00+05:30`);
             const expireThreshold = new Date(slotStart.getTime() + 10 * 60 * 1000);
 
             if (now > expireThreshold) {
-                db.bookings.update(booking.id, {
+                await db.bookings.update(booking.id, {
                     status: 'not_attended',
                     autoExpiredAt: now
                 });
-                db.meetingSlots.update(booking.slotId, { status: 'available' });
+                await db.meetingSlots.update(booking.slotId, { status: 'available' });
                 console.log(`[Auto-Expiry] Booking ${booking.id} marked as not_attended`);
             }
         }
@@ -116,10 +116,12 @@ const runAutoExpiry = () => {
     }
 };
 
-app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+initDB().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 
-    // Start auto-expiry job
-    setInterval(runAutoExpiry, 2 * 60 * 1000);
-    console.log('[Auto-Expiry] Job started - runs every 2 minutes');
+        // Start auto-expiry job
+        setInterval(runAutoExpiry, 2 * 60 * 1000);
+        console.log('[Auto-Expiry] Job started - runs every 2 minutes');
+    });
 });

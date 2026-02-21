@@ -1,4 +1,4 @@
-import db from '../database/inMemoryDB.js';
+import db from '../database/postgresDB.js';
 
 // Helper: check if two time ranges overlap
 const timesOverlap = (start1, end1, start2, end2) => {
@@ -44,7 +44,7 @@ export const createBatchSlots = async (req, res) => {
         }
 
         // Check for overlaps with existing slots on the same date
-        const existingSlots = db.meetingSlots.findByDate(date)
+        const existingSlots = (await db.meetingSlots.findByDate(date))
             .filter(s => s.status !== 'cancelled');
 
         for (const newSlot of slotsToCreate) {
@@ -57,8 +57,8 @@ export const createBatchSlots = async (req, res) => {
             }
         }
 
-        // Create all slots
-        const created = slotsToCreate.map(s =>
+        // Create all slots sequentially or in parallel
+        const created = await Promise.all(slotsToCreate.map(s =>
             db.meetingSlots.create({
                 date,
                 startTime: s.start,
@@ -66,7 +66,7 @@ export const createBatchSlots = async (req, res) => {
                 duration: dur,
                 createdBy: req.user.id
             })
-        );
+        ));
 
         res.status(201).json({ success: true, slots: created, count: created.length });
     } catch (error) {
@@ -78,13 +78,14 @@ export const createBatchSlots = async (req, res) => {
 // GET /api/meeting-slots/admin/all — Admin gets all slots with booking info
 export const getAllSlots = async (req, res) => {
     try {
-        const slots = db.meetingSlots.findAll();
+        const slots = await db.meetingSlots.findAll();
 
-        const enriched = slots.map(slot => {
-            const booking = db.bookings.findBySlotId(slot.id)
-                .find(b => b.status !== 'cancelled');
+        const enriched = await Promise.all(slots.map(async slot => {
+            const bookings = await db.bookings.findBySlotId(slot.id);
+            const booking = bookings.find(b => b.status !== 'cancelled');
+
             if (booking) {
-                const user = db.users.findById(booking.userId);
+                const user = await db.users.findById(booking.userId);
                 return {
                     ...slot,
                     booking: {
@@ -98,7 +99,7 @@ export const getAllSlots = async (req, res) => {
                 };
             }
             return { ...slot, booking: null };
-        });
+        }));
 
         // Sort by date desc, then startTime desc
         enriched.sort((a, b) => {
@@ -116,7 +117,7 @@ export const getAllSlots = async (req, res) => {
 // GET /api/meeting-slots/available — User gets available future slots
 export const getAvailableSlots = async (req, res) => {
     try {
-        const slots = db.meetingSlots.findAvailable();
+        const slots = await db.meetingSlots.findAvailable();
 
         // Sort by date asc, then startTime asc
         slots.sort((a, b) => {
@@ -134,7 +135,7 @@ export const getAvailableSlots = async (req, res) => {
 // PUT /api/meeting-slots/:id — Admin updates a slot
 export const updateSlot = async (req, res) => {
     try {
-        const slot = db.meetingSlots.findById(req.params.id);
+        const slot = await db.meetingSlots.findById(req.params.id);
         if (!slot) return res.status(404).json({ message: 'Slot not found' });
 
         if (slot.status === 'booked') {
@@ -162,7 +163,7 @@ export const updateSlot = async (req, res) => {
             const checkStart = updates.startTime || slot.startTime;
             const checkEnd = updates.endTime || slot.endTime;
 
-            const existing = db.meetingSlots.findByDate(checkDate)
+            const existing = (await db.meetingSlots.findByDate(checkDate))
                 .filter(s => s.id !== slot.id && s.status !== 'cancelled');
 
             for (const other of existing) {
@@ -174,7 +175,7 @@ export const updateSlot = async (req, res) => {
             }
         }
 
-        const updated = db.meetingSlots.update(req.params.id, updates);
+        const updated = await db.meetingSlots.update(req.params.id, updates);
         res.json({ success: true, slot: updated });
     } catch (error) {
         console.error('Update slot error:', error);
@@ -185,14 +186,14 @@ export const updateSlot = async (req, res) => {
 // DELETE /api/meeting-slots/:id — Admin deletes a slot
 export const deleteSlot = async (req, res) => {
     try {
-        const slot = db.meetingSlots.findById(req.params.id);
+        const slot = await db.meetingSlots.findById(req.params.id);
         if (!slot) return res.status(404).json({ message: 'Slot not found' });
 
         if (slot.status === 'booked') {
             return res.status(403).json({ message: 'Cannot delete a booked slot' });
         }
 
-        db.meetingSlots.delete(req.params.id);
+        await db.meetingSlots.delete(req.params.id);
         res.json({ success: true, message: 'Slot deleted' });
     } catch (error) {
         console.error('Delete slot error:', error);

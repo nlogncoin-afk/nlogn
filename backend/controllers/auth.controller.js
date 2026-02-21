@@ -1,4 +1,4 @@
-import db from '../database/inMemoryDB.js';
+import db from '../database/postgresDB.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { generateOTP } from '../utils/generateOTP.js';
@@ -81,7 +81,7 @@ export const verifyEmail = async (req, res) => {
             });
 
             // Delete from pending
-            db.pendingUsers.delete(userId);
+            await db.pendingUsers.delete(userId);
 
             return res.json({
                 success: true,
@@ -113,8 +113,8 @@ export const verifyEmail = async (req, res) => {
 
         await db.users.update(userId, {
             isVerified: true,
-            otp: undefined,
-            otpExpiry: undefined,
+            otp: null,
+            otpExpiry: null,
         });
 
         res.json({
@@ -298,8 +298,8 @@ export const resetPassword = async (req, res) => {
 
         await db.users.update(user.id, {
             password: hashedPassword,
-            otp: undefined,
-            otpExpiry: undefined
+            otp: null,
+            otpExpiry: null
         });
 
         res.json({ success: true, message: 'Password reset successfully' });
