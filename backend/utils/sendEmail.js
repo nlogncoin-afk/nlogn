@@ -14,6 +14,7 @@ export const sendEmail = async (to, subject, text) => {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASS,
                 },
+                connectionTimeout: 2000, // Fail fast on Render's blocked ports
             });
 
             const mailOptions = {

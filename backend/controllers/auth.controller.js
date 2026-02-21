@@ -40,7 +40,7 @@ export const registerUser = async (req, res) => {
         });
 
         if (pendingUser) {
-            await sendEmail(email, 'Verify your email', `Your OTP is ${otp}`);
+            sendEmail(email, 'Verify your email', `Your OTP is ${otp}`).catch(console.error);
 
             res.status(201).json({
                 success: true,
@@ -205,7 +205,7 @@ export const resendOTP = async (req, res) => {
             await db.users.update(user.id, { otp, otpExpiry });
         }
 
-        await sendEmail(user.email, 'Your New OTP', `Your new OTP is ${otp}`);
+        sendEmail(user.email, 'Your New OTP', `Your new OTP is ${otp}`).catch(console.error);
 
         res.json({ success: true, message: 'OTP resent successfully' });
 
@@ -233,7 +233,7 @@ export const forgotPassword = async (req, res) => {
         otpExpiry.setMinutes(otpExpiry.getMinutes() + 10);
 
         await db.users.update(user.id, { otp, otpExpiry });
-        await sendEmail(user.email, 'Password Reset OTP', `Your OTP for password reset is ${otp}`);
+        sendEmail(user.email, 'Password Reset OTP', `Your OTP for password reset is ${otp}`).catch(console.error);
 
         res.json({ success: true, message: 'OTP sent to your email', userId: user.id });
 
