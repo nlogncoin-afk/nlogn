@@ -23,6 +23,10 @@ const PORT = process.env.PORT || 5000;
 // Security Middlewares
 app.use(helmet());
 
+// Trust the first proxy (Render)
+// Required for express-rate-limit to accurately identify IPs
+app.set('trust proxy', 1);
+
 // Configure CORS
 app.use(cors({
     origin: function (origin, callback) {

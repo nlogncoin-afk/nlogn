@@ -7,14 +7,13 @@ export const sendEmail = async (to, subject, text) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
         try {
             const transporter = nodemailer.createTransport({
-                service: process.env.EMAIL_SERVICE || 'gmail',
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true, // true for 465, false for other ports
                 auth: {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASS,
                 },
-                connectionTimeout: 5000,   // 5s to establish TCP
-                greetingTimeout: 5000,     // 5s for SMTP greeting
-                socketTimeout: 10000,      // 10s for socket inactivity
             });
 
             const mailOptions = {
@@ -30,14 +29,6 @@ export const sendEmail = async (to, subject, text) => {
             console.log('Subject:', subject);
             console.log('Body:', text);
             console.log('---------------------------');
-
-            try {
-                // Write to artifact dir to be safe
-                const logPath = 'C:\\Users\\sanjo\\.gemini\\antigravity\\brain\\1cdf95d9-37a9-44cc-9147-85f875790622\\otp.log';
-                fs.writeFileSync(logPath, `To: ${to}\nSubject: ${subject}\nBody: ${text}\n---------------------------\n`, { flag: 'a' });
-            } catch (err) {
-                console.error('Failed to write to otp.log', err);
-            }
 
             console.log('Attempting to send email with options:', { ...mailOptions, text: '***' }); // Log options without sensitive text
             const info = await transporter.sendMail(mailOptions);
