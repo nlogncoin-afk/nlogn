@@ -1,0 +1,29 @@
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 28 modules transformed.
+
+---STDERR---
+✗ Build failed in 1.48s
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+E:/anti-log/frontend/src/components/Landing/LandingPage.jsx:171:19: ERROR: Expected "}" but found "ve"
+file: E:/anti-log/frontend/src/components/Landing/LandingPage.jsx:171:19
+
+Expected "}" but found "ve"
+169 |          Icon: BookOpen,
+170 |          title: 'Self-Prepared DSA Learners',
+171 |          desc: 'You've solved 300+ problems — now learn to communicate your solutions under pressure.',
+    |                     ^
+172 |      },
+173 |      {
+
+    at failureErrorWithLog (e:\anti-log\frontend\node_modules\esbuild\lib\main.js:1467:15)
+    at e:\anti-log\frontend\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (e:\anti-log\frontend\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (e:\anti-log\frontend\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (e:\anti-log\frontend\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
