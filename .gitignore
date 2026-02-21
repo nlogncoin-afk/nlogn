@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.*
+dist
+dist-ssr
+.DS_Store
+.vscode
+*.log
+backend/otp.log
+backend/server.log
+backend/server_error.log
+backend/data/db.json
+backend/uploads/

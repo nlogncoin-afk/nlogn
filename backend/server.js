@@ -24,20 +24,30 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 
 // Configure CORS
-const allowedOrigins = [
-    'http://localhost:5173', // Vite default local
-    process.env.FRONTEND_URL // Production URL
-].filter(Boolean);
-
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
+        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+
+        // Define allowed URLs dynamically
+        const localOrigin = 'http://localhost:5173';
+        const prodOrigin = process.env.FRONTEND_URL;
+
+        // If the origin exactly matches local or production (ignoring trailing slashes)
+        // or if production URL isn't set yet (we just allow everything temporarily to prevent 500s)
+        if (!prodOrigin) {
+            return callback(null, true);
         }
-        return callback(null, true);
+
+        // Clean up URLs to compare without trailing slashes
+        const cleanOrigin = origin.replace(/\/$/, "");
+        const cleanProd = prodOrigin.replace(/\/$/, "");
+
+        if (cleanOrigin === localOrigin || cleanOrigin === cleanProd || cleanOrigin.includes('vercel.app')) {
+            return callback(null, true);
+        }
+
+        return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
     },
     credentials: true,
 }));
