@@ -35,7 +35,7 @@ const validate = (req, res, next) => {
 router.post('/register',
     authLimiter,
     [
-        check('fullName', 'Full name is required and must be under 50 characters').trim().notEmpty().isLength({ max: 50 }).escape(),
+        check('fullName', 'Full name is required and must be under 50 characters').trim().notEmpty().isLength({ max: 50 }),
         check('email', 'Please include a valid email').isEmail().normalizeEmail(),
         check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
     ],
