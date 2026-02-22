@@ -56,6 +56,11 @@ app.use(cors({
     credentials: true,
 }));
 
+// Keep-Alive Endpoint (Placed before rate limiting so cron services aren't blocked)
+app.get('/api/ping', (req, res) => {
+    res.status(200).json({ status: 'awake', time: new Date().toISOString() });
+});
+
 // Global Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
