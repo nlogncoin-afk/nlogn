@@ -12,7 +12,7 @@ export const sendEmail = async (to, subject, text) => {
             const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
             // Set the sender, usually from env or a fallback
-            const senderEmail = process.env.BREVO_SENDER_EMAIL || 'myfromemail@mycompany.com';
+            const senderEmail = process.env.BREVO_SENDER_EMAIL || 'nlogn.co.in@gmail.com';
             const senderName = process.env.BREVO_SENDER_NAME || 'Anti-Log';
 
             sendSmtpEmail.subject = subject;
