@@ -26,6 +26,15 @@ export default function Register() {
     const handleRegister = async (e) => {
         e.preventDefault();
 
+        // Email Domain Validation
+        const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+        const emailDomain = formData.email.split('@')[1]?.toLowerCase();
+
+        if (!allowedDomains.includes(emailDomain)) {
+            toast.error("Please use a major email provider (Gmail, Yahoo, Outlook, etc.)");
+            return;
+        }
+
         if (formData.password.length < 8) {
             toast.error("Password must be at least 8 characters long");
             return;

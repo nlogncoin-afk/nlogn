@@ -17,6 +17,13 @@ export const registerUser = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
 
+        const allowedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+        const emailDomain = email.split('@')[1]?.toLowerCase();
+
+        if (!allowedDomains.includes(emailDomain)) {
+            return res.status(400).json({ message: 'Please use a major email provider (Gmail, Yahoo, Outlook, etc.)' });
+        }
+
         const userExists = await db.users.findByEmail(email);
 
         if (userExists) {
