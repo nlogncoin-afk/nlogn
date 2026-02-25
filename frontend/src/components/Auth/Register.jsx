@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Card, Input, Container } from '../../components/ui/Layout';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { register as registerApi } from '../../services/api';
 import { toast } from 'react-toastify';
 
@@ -15,6 +15,8 @@ export default function Register() {
         confirmPassword: ''
     });
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -23,6 +25,12 @@ export default function Register() {
 
     const handleRegister = async (e) => {
         e.preventDefault();
+
+        if (formData.password.length < 8) {
+            toast.error("Password must be at least 8 characters long");
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             toast.error("Passwords do not match");
             return;
@@ -80,26 +88,53 @@ export default function Register() {
                                 onChange={handleChange}
                                 required
                             />
-                            <Input
-                                label="Password"
-                                id="password"
-                                type="password"
-                                placeholder="Create a password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                            />
-                            <Input
-                                label="Confirm Password"
-                                id="confirmPassword"
-                                type="confirmPassword"
-                                placeholder="Confirm password"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                required
-                            />
 
-                            <Button type="submit" className="w-full bg-white text-black hover:bg-zinc-200" isLoading={isLoading}>
+                            <div className="relative">
+                                <Input
+                                    label="Password"
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Create a password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-9 text-zinc-500 hover:text-zinc-300"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+
+                            <div className="relative">
+                                <Input
+                                    label="Confirm Password"
+                                    id="confirmPassword"
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    placeholder="Confirm password"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-9 text-zinc-500 hover:text-zinc-300"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+
+                            <div className="text-xs text-zinc-500 my-2">
+                                <p>Password Requirements:</p>
+                                <ul className="list-disc pl-4 mt-1 space-y-1">
+                                    <li>Minimum 8 characters</li>
+                                </ul>
+                            </div>
+
+                            <Button type="submit" className="w-full bg-white text-black hover:bg-zinc-200 mt-2" isLoading={isLoading}>
                                 Create Account
                             </Button>
                         </form>
